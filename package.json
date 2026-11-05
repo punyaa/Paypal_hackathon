@@ -1,0 +1,15 @@
+{
+  "name": "paypal-ai-hackathon",
+  "version": "0.1.0",
+  "description": "PayPal AI Hackathon 2026 project",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "check:sandbox": "node --env-file=.env scripts/check-sandbox.js",
+    "start": "node --env-file=.env src/index.js"
+  }
+}
