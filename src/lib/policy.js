@@ -1,7 +1,7 @@
 // Deterministic release policy. The AI only reports what it sees; this code decides
 // whether money may move. Kept pure so it is easy to test and to explain.
 
-export function decide({ criteria, results, amount, minConfidence = 0.7, partialThreshold = 0.5 }) {
+export function decide({ criteria, results, amount, minConfidence = 0.7, partialThreshold = 0.5, injectionSuspected = false }) {
   const byId = new Map(results.map((r) => [r.criterionId, r]));
   let total = 0;
   let passedWeight = 0;
@@ -31,7 +31,10 @@ export function decide({ criteria, results, amount, minConfidence = 0.7, partial
   let action;
   let reason;
 
-  if (lowConfidence.length) {
+  if (injectionSuspected) {
+    action = "human_review";
+    reason = "The submitted page contains text addressed to the AI verifier. A person decides, whatever the AI said.";
+  } else if (lowConfidence.length) {
     action = "human_review";
     reason = `${lowConfidence.length} criterion(s) could not be judged confidently, so a person decides.`;
   } else if (score === 1) {

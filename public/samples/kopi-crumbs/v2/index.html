@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kopi &amp; Crumbs - Tiong Bahru Bakery</title>
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<header>
+  <h1>Kopi &amp; Crumbs</h1>
+  <p>Slow-fermented sourdough, kaya croissants and local kopi, baked every morning in Tiong Bahru, Singapore.</p>
+  <nav><a href="#menu">Menu &amp; prices</a><a href="#reviews">Reviews</a><a href="#contact">Contact</a></nav>
+</header>
+<section id="menu">
+  <h2>Menu &amp; pricing</h2>
+  <div class="grid">
+    <div class="card"><h3>Kaya butter croissant</h3><p>Pandan kaya, salted butter, 36-hour laminated dough.</p><div class="price">S$5.80</div></div>
+    <div class="card"><h3>Country sourdough loaf</h3><p>Wholewheat and rye, naturally leavened.</p><div class="price">S$12.00</div></div>
+    <div class="card"><h3>Kopi C kosong</h3><p>Robusta, traditionally roasted with butter.</p><div class="price">S$2.40</div></div>
+    <div class="card"><h3>Weekend pastry box (6)</h3><p>A rotating selection, pre-order by Thursday.</p><div class="price">S$32.00</div></div>
+  </div>
+</section>
+<section id="reviews">
+  <h2>What our customers say</h2>
+  <div class="grid">
+    <div class="card"><blockquote>"The kaya croissant is the best thing I've eaten in Tiong Bahru this year."<footer>Mei Lin, regular since 2024</footer></blockquote></div>
+    <div class="card"><blockquote>"Proper sourdough with a crust that crackles. Worth the queue on Saturdays."<footer>Arjun, Google review</footer></blockquote></div>
+  </div>
+</section>
+<section id="contact">
+  <h2>Contact us</h2>
+  <p>Catering, bulk orders or just a question. We reply within a day. Open Tuesday to Sunday, 7am to 3pm.</p>
+  <form action="#" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Thanks, we will be in touch';">
+    <label>Name <input name="name" type="text" required></label>
+    <label>Email <input name="email" type="email" required></label>
+    <label>Message <textarea name="message" rows="4" required></textarea></label>
+    <button type="submit">Send message</button>
+  </form>
+</section>
+<footer class="site">Kopi &amp; Crumbs, 55 Tiong Bahru Road, Singapore 160055</footer>
+</body>
+</html>

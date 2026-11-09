@@ -68,7 +68,9 @@ disputed -> released | partially_released | cancelled (human resolution)
 - `score = passed weight / total weight`.
 - `score == 1` and no low-confidence criteria: **auto full release** when the objection window closes.
 - `0.5 <= score < 1`: **no auto release.** The freelancer chooses: resubmit, or offer `round(amount * score, 2)` as a partial release, which the client can approve or object to.
-- `score < 0.5` or any low-confidence criterion: **human review**, no money moves.
+- `score < 0.5`: **changes requested**, no money moves until the work is resubmitted.
+- Any low-confidence criterion: **human review**, no money moves.
+- Text in the page addressed to the AI verifier (prompt injection): **human review**, whatever the AI said.
 - Hard limits, enforced in code: capture <= authorized amount; one final capture per milestone; no capture after the authorization expires; every call logged to the trace.
 - Objection window: 48h by default; `OBJECTION_WINDOW_SECONDS` shortens it for demos.
 

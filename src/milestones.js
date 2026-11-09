@@ -227,7 +227,11 @@ export class MilestoneService {
         amount: m.amount,
         minConfidence: this.config.policy.minConfidence,
         partialThreshold: this.config.policy.partialThreshold,
+        injectionSuspected: Boolean(evidence.checks?.injectionSuspected),
       });
+      if (evidence.checks?.injectionSuspected) {
+        this.trace(m, "security", "Possible prompt injection: the page contains text aimed at the AI verifier", { matches: evidence.checks.injectionMatches }, "policy");
+      }
       this.trace(m, "policy", decision.reason, decision, "policy");
 
       m.verifications.push({
@@ -236,7 +240,8 @@ export class MilestoneService {
         url: submission.url,
         results,
         decision,
-        screenshots: evidence.screenshots || [],
+        screenshots: (evidence.screenshots || []).map(({ label, path }) => ({ label, path })),
+        checks: evidence.checks,
         method: evidence.method,
       });
       m.decision = decision;

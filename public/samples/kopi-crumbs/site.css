@@ -1,0 +1,21 @@
+:root { --bg: #fbf7f1; --ink: #2b211a; --muted: #6f6257; --accent: #b4532a; --card: #fff; --line: #eadfd2; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
+header { padding: 56px 20px 40px; text-align: center; background: linear-gradient(180deg, #f3e6d6, var(--bg)); }
+header h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); margin: 0 0 8px; letter-spacing: -0.02em; }
+header p { margin: 0 auto; max-width: 560px; color: var(--muted); font-size: 1.1rem; }
+nav { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-top: 20px; font-family: system-ui, sans-serif; font-size: 0.95rem; }
+nav a { color: var(--accent); text-decoration: none; }
+section { max-width: 960px; margin: 0 auto; padding: 36px 20px; }
+h2 { font-size: 1.8rem; margin: 0 0 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.price { font-family: system-ui, sans-serif; font-weight: 700; color: var(--accent); font-size: 1.15rem; }
+blockquote { margin: 0; font-style: italic; }
+blockquote footer { font-style: normal; color: var(--muted); margin-top: 8px; font-family: system-ui, sans-serif; font-size: 0.9rem; }
+form { display: grid; gap: 12px; max-width: 520px; font-family: system-ui, sans-serif; }
+label { display: grid; gap: 4px; font-size: 0.9rem; color: var(--muted); }
+input, textarea { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
+button { font: inherit; padding: 12px 16px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer; }
+footer.site { text-align: center; padding: 30px 20px 50px; color: var(--muted); font-family: system-ui, sans-serif; font-size: 0.9rem; }
+.wide-table { width: 1200px; }
