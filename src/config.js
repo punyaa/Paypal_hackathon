@@ -30,6 +30,8 @@ function pickAiProvider() {
   if (forced) return forced;
   if (env("ANTHROPIC_API_KEY")) return "anthropic";
   if (env("OPENAI_API_KEY")) return "openai";
+  if (env("GOOGLE_GENERATIVE_AI_API_KEY") || env("GEMINI_API_KEY")) return "google";
+  if (env("META_API_KEY") || env("MODEL_API_KEY")) return "meta";
   return "mock";
 }
 
@@ -49,6 +51,9 @@ export const config = {
     provider: pickAiProvider(),
     anthropicModel: env("ANTHROPIC_MODEL", "claude-sonnet-5-5"),
     openaiModel: env("OPENAI_MODEL", "gpt-4.1-mini"),
+    googleModel: env("GEMINI_MODEL", "gemini-3.8-flash"),
+    metaModel: env("META_MODEL", "muse-spark-1.3"),
+    metaBaseUrl: env("META_BASE_URL", "https://api.meta.ai/v1"),
   },
   policy: {
     // A criterion only counts as passed when the AI is at least this confident.

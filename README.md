@@ -66,6 +66,8 @@ cp .env.example .env              # optional: PayPal sandbox and AI keys
 npm start                         # http://localhost:3000
 ```
 
+The AI runs on any one of **Anthropic Claude, OpenAI, Google Gemini or Meta Muse Spark**: set one key in `.env` (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` or `META_API_KEY`).
+
 With no keys in `.env`, ProofPay runs in **mock mode**: PayPal and the AI are simulated and labelled as such, so the whole flow works offline. Add keys to switch each part to the real service.
 
 ```bash
