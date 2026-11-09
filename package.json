@@ -1,7 +1,7 @@
 {
-  "name": "paypal-ai-hackathon",
+  "name": "proofpay",
   "version": "0.1.0",
-  "description": "PayPal AI Hackathon 2026 project",
+  "description": "AI-verified milestone escrow on PayPal",
   "type": "module",
   "private": true,
   "license": "MIT",
@@ -9,7 +9,21 @@
     "node": ">=20.6"
   },
   "scripts": {
-    "check:sandbox": "node --env-file=.env scripts/check-sandbox.js",
-    "start": "node --env-file=.env src/index.js"
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test test/*.test.js",
+    "check:sandbox": "node scripts/check-sandbox.js",
+    "setup:browser": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.12",
+    "@ai-sdk/openai": "^1.3.24",
+    "@paypal/agent-toolkit": "^1.11.0",
+    "ai": "^4.3.19",
+    "express": "^4.21.2",
+    "zod": "^3.25.76"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.49.0"
   }
 }
