@@ -1,106 +1,72 @@
-# Project Name
+# ProofPay
 
-> One-line pitch: what it does and who it is for.
+**AI-verified milestone escrow on PayPal.** The client's money is held by PayPal when work starts. An AI agent checks the delivered work against criteria both sides agreed upfront. Code, not the AI, then decides whether to release full payment, partial payment or nothing.
 
 Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (2026).
 
-**Demo video:** _add YouTube link (under 3 minutes)_
-**Live demo:** _add hosted URL, or see [Run it locally](#run-it-locally)_
+**Demo video:** _coming soon_
+**Live demo:** _coming soon_
 
 ---
 
 ## The problem
 
-_Who has this problem, how often, and what it costs them today. Be specific about the audience._
+Most freelance work is found outside marketplaces, through referrals, repeat clients, LinkedIn and WhatsApp. Those direct deals have no escrow:
 
-## What it does
+- Pay upfront, and the client carries the risk.
+- Pay after, and the freelancer carries the risk.
+- Marketplaces fix this for a 13-25% cut (Freelancer.com ~13%, Upwork ~15%, Fiverr ~25%), and only for clients found on the marketplace.
+- PayPal Seller Protection does not cover claims that an item "isn't what was ordered", which is the dispute freelancers face most.
 
-_Two or three sentences on the solution, then the key features:_
+## What ProofPay does
 
-- Feature 1
-- Feature 2
-- Feature 3
+1. **Create.** The freelancer describes the milestone. The AI drafts checkable acceptance criteria.
+2. **Share.** ProofPay gives a protected link to send on WhatsApp, email or LinkedIn.
+3. **Fund.** The client approves with PayPal. The money is **authorized and held, not charged**.
+4. **Deliver.** The freelancer submits a link to the work.
+5. **Verify.** The AI opens the work on desktop and mobile, captures evidence and judges each criterion.
+6. **Release.** A deterministic policy captures the full amount, offers a partial capture, or voids the hold. The client can object before any money moves.
+
+Every AI decision and every PayPal request is recorded in the milestone's **trace**.
 
 ## How it uses PayPal
 
-| PayPal capability | How we use it |
+| PayPal capability | How ProofPay uses it |
 | --- | --- |
-| _e.g. Orders API / Agent Toolkit / MCP server_ | _what it does in the product_ |
+| Orders v2, `intent: AUTHORIZE` | Hold the client's money when the milestone is funded |
+| Payments v2, capture authorization | Release full or partial payment (`final_capture`) |
+| Payments v2, void authorization | Release the hold back to the client |
+| Payments v2, reauthorize | Extend a hold past the 3-day honor period (up to 29 days) |
+| PayPal JS SDK | Client approves the hold in PayPal checkout |
+| PayPal Agent Toolkit | Assistant agent tools for orders, refunds, invoices and transactions |
 
 ## How it uses AI
 
-| AI tool / model | How we use it |
-| --- | --- |
-| _e.g. model name or provider_ | _what it does in the product_ |
-
-## Architecture
-
-_Short description or a diagram (put images in `docs/images/`)._
-
-```
-User -> Frontend -> Backend -> AI model
-                          \-> PayPal (sandbox)
-```
-
-## Tech stack
-
-- Runtime: Node.js 20.6+
-- _add frameworks, libraries and sponsor tools used_
+| Step | AI | Guardrail |
+| --- | --- | --- |
+| Draft criteria | Turns a plain description into objective, checkable criteria | Freelancer edits; client sees them before funding |
+| Verify work | Judges each criterion from page text and desktop/mobile screenshots, with evidence and confidence | Low confidence goes to a human; the AI never moves money itself |
+| Assistant | Creates milestones and looks up PayPal records from a chat message | Uses the same API and policy as the UI |
 
 ## Run it locally
 
-### Prerequisites
-
-- Node.js 20.6 or newer
-- A PayPal Developer account with a sandbox app ([developer.paypal.com](https://developer.paypal.com))
-- An API key for the AI provider you use
-
-### Setup
-
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
 npm install
-cp .env.example .env
-# then fill in .env with your sandbox credentials and AI key
+npx playwright install chromium   # browser for the AI verifier
+cp .env.example .env              # add PayPal sandbox and AI keys
+npm start                         # http://localhost:3000
 ```
 
-### Check your PayPal sandbox credentials
+With no keys in `.env`, ProofPay runs in **mock mode**: PayPal and the AI are simulated, so the whole flow can be tried offline.
 
 ```bash
-npm run check:sandbox
+npm test                # unit tests
+npm run check:sandbox   # verify PayPal sandbox credentials
 ```
 
-You should see `PayPal sandbox OK`.
+## Docs
 
-### Start the app
-
-```bash
-npm start
-```
-
-### Test accounts
-
-_Sandbox buyer login for judges (email and password), or how to create one._
-
-## Project structure
-
-```
-.
-├── src/          # application code
-├── scripts/      # helper scripts (sandbox check, seeding)
-├── docs/images/  # screenshots and diagrams for README and Devpost
-├── .env.example  # environment variables template (copy to .env)
-└── LICENSE
-```
-
-## What's next
-
-_Where the project goes after the hackathon._
-
-## Team
-
-- _Name - role_
+- [Implementation plan](docs/PLAN.md): architecture, state machine, release policy, API, build steps
 
 ## License
 
