@@ -85,7 +85,7 @@ node scripts/smoke.js http://localhost:3000   # end-to-end scenarios against a r
 
 Set `OBJECTION_WINDOW_SECONDS=60` to watch an automatic release happen.
 
-To run every money path against the sandbox automatically (it pays through PayPal's guest card checkout with a public test card):
+To run every money path against the sandbox automatically. It pays with "Pay with PayPal" as the buyer in `SANDBOX_BUYER_EMAIL` and `SANDBOX_BUYER_PASSWORD`, or through guest card checkout with a public test card if those aren't set:
 
 ```bash
 OBJECTION_WINDOW_SECONDS=30 npm start            # terminal 1

@@ -30,9 +30,9 @@ async function create(title, amount) {
   });
   const ctx = { id: m.id, ck: keyOf(m.clientLink), fk: keyOf(m.freelancerLink), clientLink: m.clientLink };
   const r = await fund(B, m.clientLink);
-  if (!r.popupClosed) throw new Error("PayPal checkout did not complete");
+  if (!r.popupClosed) throw new Error(`PayPal checkout did not complete: ${r.text.slice(0, 200)}`);
   const funded = await waitFor(ctx, ["funded"], 30000);
-  console.log(`  funded: authorization ${funded.paypal.authorizationId}, ${funded.currency} ${funded.paypal.authorizedAmount} on hold`);
+  console.log(`  funded via ${r.method}${funded.paypal.payer?.email ? ` by ${funded.paypal.payer.email.replace(/^(.{3}).*@/, "$1...@")}` : ""}: authorization ${funded.paypal.authorizationId}, ${funded.currency} ${funded.paypal.authorizedAmount} on hold`);
   return ctx;
 }
 async function submit(m, sample) {
