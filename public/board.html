@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lion City Gigs - freelance jobs from Singapore businesses</title>
+<style>
+  /* A fictional third-party job board, styled on purpose to look unlike ProofPay. */
+  :root { --g: #0f6b4f; --g2: #e7f4ee; --ink: #1d2a24; --mut: #5b6b63; --line: #d8e4dd; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Verdana, Geneva, sans-serif; background: #f6faf8; color: var(--ink); font-size: 15px; }
+  .demo-bar { background: #16203a; color: #fff; font: 13px/1.4 system-ui, sans-serif; padding: 8px 16px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .demo-bar a { color: #c9c2ff; }
+  header { background: var(--g); color: #fff; padding: 22px 16px; }
+  header .wrap { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+  header h1 { margin: 0; font-size: 1.6rem; }
+  header p { margin: 0; opacity: 0.85; font-size: 0.9rem; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  main { padding: 24px 16px 48px; }
+  .jobs { display: grid; gap: 14px; }
+  .job { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
+  @media (max-width: 640px) { .job { grid-template-columns: 1fr; } }
+  .job h2 { margin: 0 0 4px; font-size: 1.1rem; }
+  .job .who { color: var(--mut); font-size: 0.85rem; }
+  .job p { margin: 10px 0 0; line-height: 1.5; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .tags span { background: var(--g2); color: var(--g); font-size: 0.75rem; padding: 3px 8px; border-radius: 3px; }
+  .budget { font-weight: bold; font-size: 1.05rem; text-align: right; }
+  .side { display: grid; gap: 10px; justify-items: end; }
+  @media (max-width: 640px) { .side { justify-items: start; } .budget { text-align: left; } }
+  .snippet { margin-top: 28px; background: #fff; border: 1px dashed var(--line); border-radius: 6px; padding: 16px; }
+  .snippet h3 { margin: 0 0 8px; font-size: 1rem; }
+  pre { margin: 0; font-size: 12px; overflow: auto; background: #f3f6f4; padding: 12px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="demo-bar"><span>Demo: a fictional job board that added ProofPay with two lines of code.</span><a href="/">Back to ProofPay</a></div>
+<header><div class="wrap"><h1>Lion City Gigs</h1><p>Freelance jobs from Singapore small businesses</p></div></header>
+<main class="wrap">
+  <div class="jobs">
+    <article class="job">
+      <div>
+        <h2>Landing page for our Tiong Bahru bakery</h2>
+        <div class="who">Kopi &amp; Crumbs Pte Ltd · Posted 2 days ago</div>
+        <p>One-page site with our menu and prices, two customer reviews, a contact form for catering orders. Must look right on phones.</p>
+        <div class="tags"><span>Web design</span><span>HTML/CSS</span><span>Remote</span></div>
+      </div>
+      <div class="side">
+        <div class="budget">S$1,200</div>
+        <button data-proofpay data-proofpay-note data-title="Landing page for Kopi &amp; Crumbs bakery" data-amount="1200" data-currency="SGD" data-client="Kopi &amp; Crumbs Pte Ltd" data-description="One-page site with the menu and prices, two customer reviews, a contact form for catering orders, and it must work well on phones."></button>
+      </div>
+    </article>
+    <article class="job">
+      <div>
+        <h2>Product page copy for 3 tee designs</h2>
+        <div class="who">Merlion Tees · Posted 5 days ago</div>
+        <p>Write product pages for three new t-shirt designs: title, 80 to 120 word description, size guide and care instructions on each page.</p>
+        <div class="tags"><span>Copywriting</span><span>E-commerce</span></div>
+      </div>
+      <div class="side">
+        <div class="budget">S$300</div>
+        <button data-proofpay data-proofpay-note data-title="Product page copy for 3 tee designs" data-amount="300" data-currency="SGD" data-client="Merlion Tees" data-description="Three product pages, each with a title, an 80 to 120 word description, a size guide and care instructions."></button>
+      </div>
+    </article>
+    <article class="job">
+      <div>
+        <h2>Class schedule page with booking links</h2>
+        <div class="who">Tiong Bahru Yoga · Posted 1 week ago</div>
+        <p>A weekly timetable page listing every class with teacher, time and a booking link. Needs a pricing table for class packs.</p>
+        <div class="tags"><span>Web</span><span>Wellness</span></div>
+      </div>
+      <div class="side">
+        <div class="budget">S$450</div>
+        <button data-proofpay data-proofpay-note data-title="Class schedule page with booking links" data-amount="450" data-currency="SGD" data-client="Tiong Bahru Yoga" data-description="Weekly timetable listing each class with teacher, time and booking link, plus a pricing table for class packs, works on phones."></button>
+      </div>
+    </article>
+  </div>
+
+  <section class="snippet">
+    <h3>How this board added ProofPay</h3>
+    <pre id="code"></pre>
+  </section>
+</main>
+<script>
+  document.getElementById("code").textContent =
+    '<script src="' + location.origin + '/embed.js" defer><\/script>\n' +
+    '<button data-proofpay data-title="Landing page" data-amount="1200"\n' +
+    '        data-currency="SGD" data-client="Kopi & Crumbs"\n' +
+    '        data-description="Menu with prices, contact form, mobile friendly"><\/button>';
+</script>
+<script src="/embed.js" defer></script>
+</body>
+</html>

@@ -126,6 +126,7 @@ form.onsubmit = async (e) => {
       criteria: criteria(),
       freelancer: { name: form.freelancerName.value || "Freelancer" },
       client: { name: form.clientName.value || "Client" },
+      source: new URLSearchParams(location.search).get("source") || "direct",
     });
     location.href = m.freelancerLink + "&created=1";
   } catch (err) {
