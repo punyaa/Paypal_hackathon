@@ -84,6 +84,15 @@ node scripts/smoke.js http://localhost:3000   # end-to-end scenarios against a r
 
 Set `OBJECTION_WINDOW_SECONDS=60` to watch an automatic release happen.
 
+To run every money path against the sandbox automatically (it pays through PayPal's guest card checkout with a public test card):
+
+```bash
+OBJECTION_WINDOW_SECONDS=30 npm start            # terminal 1
+node scripts/sandbox-e2e.cjs http://localhost:3000   # terminal 2
+```
+
+It covers a fix-then-full-release, a partial release (`final_capture` returns the rest of the hold), a prompt-injection case resolved by voiding, and a cancellation. `node scripts/ai-bakeoff.js 3` compares AI providers on the sample sites.
+
 ### Sample work to verify
 
 `/samples/kopi-crumbs/` has three versions of a bakery landing page:
