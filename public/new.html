@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New milestone - ProofPay</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<main>
+  <h1>New milestone</h1>
+  <p class="lede">Describe the work. ProofPay drafts criteria a checker can verify, your client puts the money on hold with PayPal, and it's released when the work passes.</p>
+
+  <div class="split">
+    <form id="form" class="panel form-grid" novalidate>
+      <label class="field">What are you delivering?
+        <input name="title" required placeholder="Landing page for Kopi & Crumbs bakery">
+      </label>
+      <label class="field">Describe the work
+        <span class="hint">Plain words are fine. The AI turns this into checkable criteria.</span>
+        <textarea name="description" rows="4" placeholder="One-page site with the menu and prices, two customer reviews, a contact form for catering orders, and it must work well on phones."></textarea>
+      </label>
+      <div class="row-2">
+        <label class="field">Amount
+          <div class="row-amount">
+            <input name="amount" type="number" min="1" step="0.01" required placeholder="1200" class="num">
+            <select name="currency" aria-label="Currency"><option>SGD</option><option>USD</option><option>EUR</option><option>GBP</option><option>AUD</option></select>
+          </div>
+        </label>
+        <label class="field">Due date
+          <input name="dueDate" type="date">
+        </label>
+      </div>
+      <div class="row-2">
+        <label class="field">Your name
+          <input name="freelancerName" placeholder="Arjun Mehta">
+        </label>
+        <label class="field">Client
+          <input name="clientName" placeholder="Kopi & Crumbs Pte Ltd">
+        </label>
+      </div>
+
+      <div>
+        <div class="page-head"><h2 style="margin:0">Acceptance criteria</h2>
+          <button type="button" class="btn secondary" id="draft">Draft with AI</button>
+        </div>
+        <p class="muted small" style="margin:6px 0 12px">Each line should be something a stranger could check on the delivered page. These are what the money depends on.</p>
+        <ul class="criteria criteria-edit" id="criteria"></ul>
+        <button type="button" class="btn secondary" id="add" style="margin-top:10px">Add a criterion</button>
+      </div>
+
+      <div id="error" class="error" hidden></div>
+      <div class="actions"><button class="btn" type="submit" id="create">Create milestone and get client link</button></div>
+    </form>
+
+    <aside class="panel stack">
+      <h2>What your client sees</h2>
+      <div class="amount num" id="preview-amount"><span class="cur">SGD</span>0.00</div>
+      <div class="meter"><span class="pending" style="width:100%"></span></div>
+      <p class="small muted" style="margin:0">Their money is held by PayPal, not charged, until the work passes these criteria or they approve it.</p>
+      <ul class="criteria" id="preview-criteria"><li><span class="mark"></span><div class="muted">Criteria appear here</div></li></ul>
+    </aside>
+  </div>
+</main>
+<script type="module">
+import { api, esc, qs, topbar } from "/app.js";
+await topbar("new");
+
+const form = qs("#form");
+const list = qs("#criteria");
+const error = qs("#error");
+
+function addRow(text = "") {
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="mark" aria-hidden="true">${list.children.length + 1}</span>
+    <input aria-label="Criterion" value="${esc(text)}" placeholder="Has a contact form with name, email and message fields">
+    <button type="button" class="icon-btn" aria-label="Remove criterion">×</button>`;
+  li.querySelector("button").onclick = () => { li.remove(); renumber(); preview(); };
+  li.querySelector("input").oninput = preview;
+  list.append(li);
+  renumber();
+}
+function renumber() { [...list.children].forEach((li, i) => (li.querySelector(".mark").textContent = i + 1)); }
+const criteria = () => [...list.querySelectorAll("input")].map((i) => i.value.trim()).filter(Boolean);
+
+function preview() {
+  const amount = Number(form.amount.value || 0);
+  qs("#preview-amount").innerHTML = `<span class="cur">${esc(form.currency.value)}</span>${amount.toLocaleString("en-SG", { minimumFractionDigits: 2 })}`;
+  const c = criteria();
+  qs("#preview-criteria").innerHTML = c.length
+    ? c.map((t) => `<li><span class="mark"></span><div>${esc(t)}</div></li>`).join("")
+    : `<li><span class="mark"></span><div class="muted">Criteria appear here</div></li>`;
+}
+form.addEventListener("input", preview);
+qs("#add").onclick = () => addRow();
+
+qs("#draft").onclick = async (e) => {
+  const btn = e.currentTarget;
+  error.hidden = true;
+  const description = [form.title.value, form.description.value].filter(Boolean).join(". ");
+  btn.disabled = true; btn.textContent = "Drafting...";
+  try {
+    const { criteria: drafted } = await api("POST", "/api/criteria/draft", { description });
+    list.innerHTML = "";
+    drafted.forEach((t) => addRow(t));
+    preview();
+  } catch (err) {
+    error.textContent = err.message; error.hidden = false;
+  } finally {
+    btn.disabled = false; btn.textContent = "Draft again";
+  }
+};
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  error.hidden = true;
+  const btn = qs("#create");
+  btn.disabled = true;
+  try {
+    const m = await api("POST", "/api/milestones", {
+      title: form.title.value,
+      description: form.description.value,
+      amount: form.amount.value,
+      currency: form.currency.value,
+      dueDate: form.dueDate.value ? new Date(form.dueDate.value + "T23:59:00").toISOString() : null,
+      criteria: criteria(),
+      freelancer: { name: form.freelancerName.value || "Freelancer" },
+      client: { name: form.clientName.value || "Client" },
+    });
+    location.href = m.freelancerLink + "&created=1";
+  } catch (err) {
+    error.textContent = err.message; error.hidden = false; btn.disabled = false;
+  }
+};
+
+// Prefill from the job board demo (?title=&amount=&description=&client=)
+const p = new URLSearchParams(location.search);
+for (const [k, field] of [["title", "title"], ["amount", "amount"], ["description", "description"], ["client", "clientName"], ["currency", "currency"]]) {
+  if (p.get(k)) form[field].value = p.get(k);
+}
+addRow(); preview();
+</script>
+</body>
+</html>

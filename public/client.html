@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protected milestone - ProofPay</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<main class="narrow" id="app"><p class="muted">Loading the milestone...</p></main>
+<p class="foot">ProofPay holds payments with PayPal and releases them when agreed work passes. The AI reports what it sees; release rules are fixed code, and you can object before any money moves.</p>
+<script type="module">
+import { api, esc, qs, money, statusPill, meter, legend, criteriaResults, screenshots, countdown, keyFromUrl, idFromPath, topbar } from "/app.js";
+
+const cfg = await topbar();
+const id = idFromPath();
+const k = keyFromUrl();
+const app = qs("#app");
+let m;
+let paypalRendered = false;
+
+async function load() {
+  m = await api("GET", `/api/milestones/${id}?k=${k}`);
+  render();
+}
+
+function nextStep() {
+  switch (m.status) {
+    case "awaiting_funding":
+      return { tone: "", title: "Put the payment on hold to start the work", body: "PayPal holds the money on your account without charging it. It's only released if the work passes the criteria below, or if you approve it." };
+    case "funded":
+      return { tone: "", title: `${m.freelancer.name} is working on it`, body: "Your money is on hold, not charged. You'll see the check results here when the work is submitted." };
+    case "submitted":
+    case "verifying":
+      return { tone: "", title: "Checking the submitted work", body: "The checker is opening the work on desktop and phone and comparing it with each criterion." };
+    case "release_scheduled":
+      return { tone: "", title: `Every criterion passed. Payment releases ${countdown(m.releaseAt)}`, body: "If something is wrong, object now and the money stays on hold for review. Or approve to release it straight away." };
+    case "changes_requested":
+      return { tone: "alert", title: "Some criteria did not pass", body: `${m.freelancer.name} can fix the work and resubmit. Your money stays on hold and nothing is charged.` };
+    case "partial_offered":
+      return { tone: "", title: `${m.freelancer.name} offered a partial release of ${money(m.partialOffer.amount, m.currency)}`, body: `That's the share of criteria that passed. If you accept, the rest of the hold (${money(m.amount - m.partialOffer.amount, m.currency)}) goes back to you. It releases automatically ${countdown(m.releaseAt)} unless you object.` };
+    case "needs_review":
+      return { tone: "alert", title: "A person will review this result", body: "The checker could not judge every criterion confidently, so no money moves until someone reviews it." };
+    case "disputed":
+      return { tone: "alert", title: "You objected. The money stays on hold", body: `Your reason: "${m.objection?.reason || "not given"}". The payment is frozen until the review is resolved.` };
+    case "released":
+      return { tone: "released", title: "Paid", body: `${money(m.paypal.captures[0].amount, m.currency)} was released to ${m.freelancer.name}.` };
+    case "partially_released":
+      return { tone: "released", title: "Partly paid", body: `${money(m.paypal.captures[0].amount, m.currency)} was released to ${m.freelancer.name}. The remaining ${money(m.amount - m.paypal.captures[0].amount, m.currency)} of the hold was returned to you.` };
+    case "cancelled":
+      return { tone: "", title: "Cancelled", body: m.paypal.authorizationId ? "The PayPal hold was voided and your money is released." : "Nothing was charged." };
+    default:
+      return { tone: "", title: m.status, body: "" };
+  }
+}
+
+function render() {
+  const step = nextStep();
+  const v = m.verifications.at(-1);
+  app.innerHTML = `
+    <div class="page-head"><div>
+      <p class="muted" style="margin:0 0 6px">${esc(m.freelancer.name)} for ${esc(m.client.name)}</p>
+      <h1>${esc(m.title)}</h1>
+    </div>${statusPill(m.status)}</div>
+
+    <section class="panel" style="margin-top:18px">
+      <div class="amount num"><span class="cur">${esc(m.currency)}</span>${Number(m.amount).toLocaleString("en-SG", { minimumFractionDigits: 2 })}</div>
+      ${meter(m)}
+      ${legend(m)}
+      <div class="next-step ${step.tone}"><strong>${esc(step.title)}</strong><span class="muted">${esc(step.body)}</span></div>
+      <div id="actions"></div>
+    </section>
+
+    <section class="panel">
+      <div class="page-head"><h2 style="margin:0">${v ? `Check results, attempt ${v.n}` : "What the work must do"}</h2>
+        ${v ? `<div class="score"><b class="num">${Math.round(v.decision.score * 100)}%</b><span class="muted small">of criteria passed</span></div>` : ""}</div>
+      ${m.description ? `<p class="muted">${esc(m.description)}</p>` : ""}
+      ${criteriaResults(m)}
+      ${v ? `<p class="small muted">Checked ${esc(v.url)} with ${esc(v.method)}.</p>${screenshots(m)}` : ""}
+    </section>`;
+
+  const actions = qs("#actions");
+  if (m.status === "awaiting_funding") {
+    actions.innerHTML = `<div id="paypal-buttons" style="margin-top:18px;max-width:360px"></div><div id="err" class="error" hidden></div>`;
+    renderPayPal();
+  } else if (["release_scheduled", "partial_offered"].includes(m.status)) {
+    actions.innerHTML = `<div class="actions">
+        <button class="btn release" id="approve">Approve and release now</button>
+        <button class="btn alert" id="object-open">Something's wrong, object</button>
+      </div>
+      <form id="object-form" class="form-grid" hidden style="margin-top:14px">
+        <label class="field">What's wrong?<textarea name="reason" required placeholder="The contact form doesn't send messages to our inbox."></textarea></label>
+        <div class="actions" style="margin-top:0"><button class="btn alert" type="submit">Object and keep the money on hold</button></div>
+      </form><div id="err" class="error" hidden></div>`;
+    qs("#approve").onclick = () => act("approve");
+    qs("#object-open").onclick = () => (qs("#object-form").hidden = false);
+    qs("#object-form").onsubmit = (e) => { e.preventDefault(); act("object", { reason: e.target.reason.value }); };
+  }
+}
+
+async function act(action, body) {
+  try {
+    m = await api("POST", `/api/milestones/${id}/${action}?k=${k}`, body);
+    render();
+  } catch (err) {
+    const e = qs("#err"); e.textContent = err.message; e.hidden = false;
+  }
+}
+
+async function renderPayPal() {
+  const box = qs("#paypal-buttons");
+  if (cfg.paypalMode === "mock") {
+    box.innerHTML = `<button class="btn" id="mock-pay" style="width:100%">Approve with PayPal (simulated)</button>
+      <p class="small muted">Mock mode: no real PayPal account is used. Add sandbox keys to use PayPal checkout.</p>`;
+    qs("#mock-pay").onclick = async () => {
+      try {
+        const order = await api("POST", `/api/milestones/${id}/order?k=${k}`);
+        m = await api("POST", `/api/milestones/${id}/authorize?k=${k}`, { orderId: order.orderId });
+        render();
+      } catch (err) { const e = qs("#err"); e.textContent = err.message; e.hidden = false; }
+    };
+    return;
+  }
+  if (!window.paypal) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=${encodeURIComponent(m.currency)}&intent=authorize&components=buttons`;
+      s.onload = resolve; s.onerror = () => reject(new Error("Could not load PayPal"));
+      document.head.append(s);
+    });
+  }
+  window.paypal.Buttons({
+    style: { layout: "vertical", label: "pay", shape: "rect" },
+    createOrder: async () => (await api("POST", `/api/milestones/${id}/order?k=${k}`)).orderId,
+    onApprove: async (data) => {
+      m = await api("POST", `/api/milestones/${id}/authorize?k=${k}`, { orderId: data.orderID });
+      render();
+    },
+    onError: (err) => { const e = qs("#err"); e.textContent = String(err?.message || err); e.hidden = false; },
+  }).render(box);
+}
+
+await load().catch((err) => (app.innerHTML = `<div class="error">${esc(err.message)}</div>`));
+// Keep the page current while work is checked or a release is pending.
+setInterval(async () => {
+  if (!m || ["awaiting_funding", "released", "partially_released", "cancelled"].includes(m.status)) return;
+  if (document.querySelector("#object-form:not([hidden])")) return;
+  const fresh = await api("GET", `/api/milestones/${id}?k=${k}`).catch(() => null);
+  if (fresh && (fresh.updatedAt !== m.updatedAt || ["release_scheduled", "partial_offered"].includes(fresh.status))) { m = fresh; render(); }
+}, 3000);
+</script>
+</body>
+</html>

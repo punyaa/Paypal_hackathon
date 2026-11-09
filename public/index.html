@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Milestones - ProofPay</title>
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
+</head>
+<body>
+<main>
+  <div class="page-head">
+    <div>
+      <h1>Your milestones</h1>
+      <p class="lede" style="margin-bottom:0">Each client's money is held by PayPal until your work passes the agreed criteria.</p>
+    </div>
+    <a class="btn" href="/new">New milestone</a>
+  </div>
+  <div class="totals" id="totals"></div>
+  <div id="grid" class="ag-theme-quartz"></div>
+  <p class="small muted" id="empty" hidden>No milestones yet. <a href="/new">Create your first one</a> or try the <a href="/board">job board demo</a>.</p>
+</main>
+<script type="module">
+import { api, esc, qs, money, statusPill, meter, moneySplit, topbar, STATUS } from "/app.js";
+await topbar("dash");
+
+const rows = await api("GET", "/api/milestones");
+qs("#empty").hidden = rows.length > 0;
+
+const sum = (fn) => rows.reduce((s, m) => s + fn(m), 0);
+const byCur = rows[0]?.currency || "SGD";
+const held = sum((m) => moneySplit(m).held);
+const paid = sum((m) => moneySplit(m).released);
+const waiting = rows.filter((m) => ["changes_requested", "needs_review", "disputed", "funded"].includes(m.status)).length;
+qs("#totals").innerHTML = `
+  <span><b class="num">${money(held, byCur)}</b> on hold with PayPal</span>
+  <span><b class="num">${money(paid, byCur)}</b> paid out</span>
+  <span><b class="num">${waiting}</b> need your action</span>`;
+
+const lastCheck = (m) => m.verifications.at(-1);
+const grid = agGrid.createGrid(qs("#grid"), {
+  rowData: rows,
+  rowHeight: 52,
+  domLayout: "autoHeight",
+  animateRows: true,
+  defaultColDef: { sortable: true, filter: true, resizable: true },
+  columnDefs: [
+    { headerName: "Milestone", field: "title", flex: 2, minWidth: 220,
+      cellRenderer: (p) => `<strong>${esc(p.value)}</strong>` },
+    { headerName: "Client", valueGetter: (p) => p.data.client.name, flex: 1.2, minWidth: 160 },
+    { headerName: "Amount", field: "amount", width: 140, type: "rightAligned", filter: "agNumberColumnFilter",
+      valueFormatter: (p) => money(p.value, p.data.currency), cellClass: "num" },
+    { headerName: "Where the money is", flex: 1.2, minWidth: 180, sortable: false, filter: false,
+      cellRenderer: (p) => { const el = document.createElement("div"); el.className = "cell-meter"; el.innerHTML = meter(p.data, { small: true }); return el; } },
+    { headerName: "Status", field: "status", width: 230,
+      valueFormatter: (p) => STATUS[p.value]?.label || p.value,
+      cellRenderer: (p) => statusPill(p.value) },
+    { headerName: "Last check", width: 130, filter: "agNumberColumnFilter",
+      valueGetter: (p) => (lastCheck(p.data) ? Math.round(lastCheck(p.data).decision.score * 100) : null),
+      valueFormatter: (p) => (p.value === null ? "Not checked" : `${p.value}% passed`) },
+    { headerName: "Created", field: "createdAt", width: 130, sort: "desc",
+      valueFormatter: (p) => new Date(p.value).toLocaleDateString("en-SG", { day: "numeric", month: "short" }) },
+  ],
+  onRowClicked: (e) => (location.href = e.data.freelancerLink),
+  overlayNoRowsTemplate: "No milestones yet",
+});
+</script>
+</body>
+</html>

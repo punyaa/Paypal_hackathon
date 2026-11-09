@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Milestone - ProofPay</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<main id="app"><p class="muted">Loading the milestone...</p></main>
+<script type="module">
+import { api, esc, qs, money, statusPill, meter, legend, criteriaResults, screenshots, countdown, keyFromUrl, idFromPath, topbar, traceView, bindTraceFilter } from "/app.js";
+
+await topbar();
+const id = idFromPath();
+const k = keyFromUrl();
+const app = qs("#app");
+let m;
+let traceFilter = "all";
+
+function nextStep() {
+  const c = m.client.name;
+  switch (m.status) {
+    case "awaiting_funding":
+      return { tone: "", title: `Send the protected link to ${c}`, body: "Work starts once they put the payment on hold with PayPal. Nothing is charged until the work passes." };
+    case "funded":
+      return { tone: "", title: "Funded. Do the work, then submit a link to it", body: `${money(m.amount, m.currency)} is on hold with PayPal${m.paypal.expiresAt ? ` until ${new Date(m.paypal.expiresAt).toLocaleDateString("en-SG", { day: "numeric", month: "short" })}` : ""}.` };
+    case "submitted":
+    case "verifying":
+      return { tone: "", title: "Checking your work", body: "The checker is opening your link on desktop and phone. This takes about half a minute." };
+    case "release_scheduled":
+      return { tone: "released", title: `Passed. Payment releases ${countdown(m.releaseAt)}`, body: `${c} can approve it sooner, or object before then.` };
+    case "changes_requested":
+      return { tone: "alert", title: "Some criteria didn't pass", body: m.decision.action === "offer_partial" ? `Fix and resubmit for the full amount, or offer ${c} a partial release of ${money(m.decision.partialAmount, m.currency)} for what passed.` : "Fix the work and resubmit. No money moves until more criteria pass." };
+    case "partial_offered":
+      return { tone: "", title: `Partial release of ${money(m.partialOffer.amount, m.currency)} offered`, body: `It releases ${countdown(m.releaseAt)} unless ${c} objects. The rest of the hold goes back to them.` };
+    case "needs_review":
+      return { tone: "alert", title: "Needs a person to review", body: m.trace.some((t) => t.type === "security") ? "The page contains text addressed to the AI checker, so the result can't be trusted automatically." : "Some criteria couldn't be judged confidently. Review the evidence and decide." };
+    case "disputed":
+      return { tone: "alert", title: `${c} objected`, body: `"${m.objection?.reason || "No reason given"}". The money stays on hold until this is resolved.` };
+    case "released":
+      return { tone: "released", title: "Paid", body: paidLine() };
+    case "partially_released":
+      return { tone: "released", title: "Partly paid", body: paidLine() };
+    case "cancelled":
+      return { tone: "", title: "Cancelled", body: "The PayPal hold was voided and the client's money released." };
+    default:
+      return { tone: "", title: m.status, body: "" };
+  }
+}
+
+function paidLine() {
+  const cap = m.paypal.captures[0];
+  const b = cap.breakdown;
+  const fee = b?.paypal_fee ? ` PayPal fee ${b.paypal_fee.currency_code} ${b.paypal_fee.value}, you receive ${b.net_amount.currency_code} ${b.net_amount.value}.` : "";
+  return `${money(cap.amount, m.currency)} captured from the hold (capture ${cap.id}).${fee}`;
+}
+
+function actions() {
+  const out = [];
+  if (["funded", "changes_requested"].includes(m.status)) {
+    out.push(`<form id="submit-form" class="form-grid" style="margin-top:16px">
+      <label class="field">Link to the delivered work<input name="url" type="url" required placeholder="https://..." value="${esc(m.submissions.at(-1)?.url || "")}"></label>
+      <label class="field">Note for the client <span class="hint">Optional</span><input name="notes" placeholder="Added the contact form; it posts to your Gmail."></label>
+      <div class="actions" style="margin-top:0">
+        <button class="btn" type="submit">${m.submissions.length ? "Resubmit for checking" : "Submit for checking"}</button>
+        ${m.status === "changes_requested" && m.decision.action === "offer_partial" ? `<button class="btn secondary" type="button" id="offer">Offer ${money(m.decision.partialAmount, m.currency)} partial release</button>` : ""}
+      </div>
+      <p class="small muted" style="margin:0">Try the samples: <a href="#" data-sample="v1">bakery v1</a>, <a href="#" data-sample="v2">bakery v2</a>, <a href="#" data-sample="sneaky">bakery with hidden instructions</a>.</p>
+    </form>`);
+  }
+  if (["needs_review", "disputed"].includes(m.status)) {
+    out.push(`<div class="actions">
+      <button class="btn release" data-resolve="release">Release full amount</button>
+      <button class="btn secondary" data-resolve="partial">Release part</button>
+      <button class="btn alert" data-resolve="refund">Return the money to the client</button>
+    </div><p class="small muted">Reviewer controls. In production these belong to a neutral reviewer, not the freelancer.</p>`);
+  }
+  if (["awaiting_funding", "funded", "changes_requested", "needs_review"].includes(m.status)) {
+    out.push(`<div class="actions"><button class="btn alert" id="cancel">${m.paypal.authorizationId ? "Cancel and return the hold" : "Cancel milestone"}</button></div>`);
+  }
+  return out.join("") + `<div id="err" class="error" hidden></div>`;
+}
+
+function render() {
+  const step = nextStep();
+  const v = m.verifications.at(-1);
+  const clientUrl = `${location.origin}${m.clientLink}`;
+  app.innerHTML = `
+    ${new URLSearchParams(location.search).get("created") && m.status === "awaiting_funding" ? `<div class="notice" style="margin-bottom:18px">Milestone created. Send your client the protected link below.</div>` : ""}
+    <div class="page-head"><div>
+      <p class="muted" style="margin:0 0 6px">For ${esc(m.client.name)}${m.dueDate ? `, due ${new Date(m.dueDate).toLocaleDateString("en-SG", { day: "numeric", month: "short" })}` : ""}</p>
+      <h1>${esc(m.title)}</h1>
+    </div>${statusPill(m.status)}</div>
+
+    <div class="split" style="margin-top:18px">
+      <div class="stack">
+        <section class="panel">
+          <div class="amount num"><span class="cur">${esc(m.currency)}</span>${Number(m.amount).toLocaleString("en-SG", { minimumFractionDigits: 2 })}</div>
+          ${meter(m)}
+          ${legend(m)}
+          <div class="next-step ${step.tone}"><strong>${esc(step.title)}</strong><span class="muted">${esc(step.body)}</span></div>
+          ${actions()}
+        </section>
+
+        <section class="panel">
+          <h3>Protected link for ${esc(m.client.name)}</h3>
+          <div class="copy-link"><input readonly value="${esc(clientUrl)}" aria-label="Client link"><button class="btn secondary" id="copy">Copy</button><a class="btn secondary" href="${esc(m.clientLink)}" target="_blank" rel="noopener">Open as client</a></div>
+        </section>
+
+        <section class="panel">
+          <div class="page-head"><h2 style="margin:0">${v ? `Check results, attempt ${v.n}` : "Acceptance criteria"}</h2>
+            ${v ? `<div class="score"><b class="num">${Math.round(v.decision.score * 100)}%</b><span class="muted small">passed</span></div>` : ""}</div>
+          ${v ? `<p class="muted small">${esc(v.decision.reason)}</p>` : ""}
+          ${criteriaResults(m)}
+          ${v ? screenshots(m) : ""}
+        </section>
+      </div>
+
+      <section class="panel">
+        <h2>Trace</h2>
+        <p class="muted small" style="margin-top:-6px">Every AI judgement, policy decision and PayPal request for this milestone, in order.</p>
+        <div id="trace" data-filter="${traceFilter}">${traceView(m, traceFilter)}</div>
+      </section>
+    </div>`;
+  bind();
+}
+
+function bind() {
+  qs("#copy")?.addEventListener("click", (e) => { navigator.clipboard?.writeText(qs(".copy-link input").value); e.target.textContent = "Copied"; });
+  const tr = qs("#trace");
+  bindTraceFilter(tr, () => m);
+  tr.addEventListener("click", () => (traceFilter = tr.dataset.filter || "all"));
+  qs("#submit-form")?.addEventListener("submit", (e) => { e.preventDefault(); act("submit", { url: e.target.url.value, notes: e.target.notes.value }); });
+  app.querySelectorAll("[data-sample]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); qs("#submit-form").url.value = `${location.origin}/samples/kopi-crumbs/${a.dataset.sample}/`; }));
+  qs("#offer")?.addEventListener("click", () => act("offer-partial"));
+  qs("#cancel")?.addEventListener("click", () => confirmCancel());
+  app.querySelectorAll("[data-resolve]").forEach((b) => (b.onclick = () => {
+    const action = b.dataset.resolve;
+    let amount;
+    if (action === "partial") {
+      amount = prompt(`Amount to release (less than ${m.amount})`, m.decision?.partialAmount || "");
+      if (!amount) return;
+    }
+    act("resolve", { action, amount });
+  }));
+}
+
+function confirmCancel() {
+  const btn = qs("#cancel");
+  if (btn.dataset.armed) return act("cancel");
+  btn.dataset.armed = "1";
+  btn.textContent = "Click again to confirm";
+}
+
+async function act(action, body) {
+  try {
+    m = await api("POST", `/api/milestones/${id}/${action}?k=${k}`, body);
+    render();
+  } catch (err) {
+    const e = qs("#err"); if (e) { e.textContent = err.message; e.hidden = false; }
+  }
+}
+
+async function load() {
+  m = await api("GET", `/api/milestones/${id}?k=${k}`);
+  render();
+}
+
+await load().catch((err) => (app.innerHTML = `<div class="error">${esc(err.message)}</div>`));
+setInterval(async () => {
+  if (!m || ["released", "partially_released", "cancelled"].includes(m.status)) return;
+  if (document.activeElement?.closest("form")) return;
+  const fresh = await api("GET", `/api/milestones/${id}?k=${k}`).catch(() => null);
+  if (fresh && (fresh.updatedAt !== m.updatedAt || ["release_scheduled", "partial_offered"].includes(fresh.status))) { m = fresh; render(); }
+}, 3000);
+</script>
+</body>
+</html>
