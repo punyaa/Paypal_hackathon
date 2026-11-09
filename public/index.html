@@ -21,6 +21,16 @@
   <div class="totals" id="totals"></div>
   <div id="grid" class="ag-theme-quartz"></div>
   <p class="small muted" id="empty" hidden>No milestones yet. <a href="/new">Create your first one</a> or try the <a href="/board">job board demo</a>.</p>
+
+  <section class="panel assistant" style="margin-top:24px">
+    <h2>Ask ProofPay</h2>
+    <p class="muted small" style="margin-top:-6px">The assistant can set up protected milestones, check on them, and look up PayPal orders, transactions and invoices with the PayPal Agent Toolkit. It has no tool that releases or refunds held money.</p>
+    <div id="chat" class="chat" aria-live="polite"></div>
+    <form id="ask" class="ask">
+      <input name="q" autocomplete="off" placeholder="Set up a protected milestone for a booking page, S$600, client Tiong Bahru Yoga" aria-label="Message the assistant">
+      <button class="btn" type="submit">Send</button>
+    </form>
+  </section>
 </main>
 <script type="module">
 import { api, esc, qs, money, statusPill, meter, moneySplit, topbar, STATUS } from "/app.js";
@@ -66,6 +76,39 @@ const grid = agGrid.createGrid(qs("#grid"), {
   onRowClicked: (e) => (location.href = e.data.freelancerLink),
   overlayNoRowsTemplate: "No milestones yet",
 });
+
+// ---------- assistant ----------
+const history = [];
+const chat = qs("#chat");
+function bubble(role, html) {
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  div.innerHTML = html;
+  chat.append(div);
+  div.scrollIntoView({ block: "nearest" });
+  return div;
+}
+const linkify = (t) => esc(t).replace(/(https?:\/\/[^\s)]+)/g, '<a href="$1">$1</a>').replace(/\n/g, "<br>");
+qs("#ask").onsubmit = async (e) => {
+  e.preventDefault();
+  const q = e.target.q.value.trim();
+  if (!q) return;
+  e.target.q.value = "";
+  history.push({ role: "user", content: q });
+  bubble("user", esc(q));
+  const wait = bubble("assistant", '<span class="muted">Working...</span>');
+  try {
+    const res = await api("POST", "/api/assistant", { messages: history });
+    history.push({ role: "assistant", content: res.reply });
+    const tools = (res.steps || []).map((s) => `<li><span class="tool-src ${s.source}">${s.source === "proofpay" ? "ProofPay" : "PayPal Agent Toolkit"}</span> ${esc(s.tool)}</li>`).join("");
+    wait.innerHTML = `${linkify(res.reply || "")}${tools ? `<ul class="tool-calls">${tools}</ul>` : ""}`;
+    if ((res.steps || []).some((s) => s.tool === "create_milestone")) {
+      grid.setGridOption("rowData", await api("GET", "/api/milestones"));
+    }
+  } catch (err) {
+    wait.innerHTML = `<span class="error">${esc(err.message)}</span>`;
+  }
+};
 </script>
 </body>
 </html>

@@ -201,3 +201,16 @@ textarea { resize: vertical; min-height: 90px; }
 @media (prefers-reduced-motion: no-preference) {
   .meter span { transition: width 600ms ease; }
 }
+
+/* ---------- assistant ---------- */
+.chat { display: grid; gap: 10px; margin: 12px 0; max-height: 420px; overflow: auto; }
+.chat:empty { display: none; }
+.msg { padding: 10px 14px; border-radius: 12px; max-width: 80ch; line-height: 1.45; }
+.msg.user { background: var(--ink); color: #fff; justify-self: end; }
+.msg.assistant { background: #f3f4f8; border: 1px solid var(--rule); }
+.msg a { word-break: break-all; }
+.tool-calls { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; font-size: 0.82rem; color: var(--ink-2); }
+.tool-src { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin-right: 4px; }
+.tool-src.proofpay { background: var(--held-soft); color: var(--held); }
+.tool-src.paypal-agent-toolkit { background: #e6effc; color: #1c5cb0; }
+.ask { display: flex; gap: 8px; }
