@@ -79,7 +79,8 @@ node scripts/smoke.js http://localhost:3000   # end-to-end scenarios against a r
 ### Testing with the PayPal sandbox
 
 1. At [developer.paypal.com](https://developer.paypal.com), create a sandbox app and copy its Client ID and Secret into `.env`.
-2. Under Testing Tools > Sandbox Accounts, note the **Personal** (buyer) account's email and password. That's the client.
+2. Under Testing Tools > Sandbox Accounts, create a buyer account for the client in a **different country** from your business account, and note its email and password. The app's business account receives the money, so it can't pay itself.
+   - If your business account is in India, the buyer must be outside India: PayPal doesn't process domestic India payments and shows "This seller doesn't accept payments in your currency". ProofPay's demo uses an Indian freelancer account and a Singapore client account.
 3. Start ProofPay, create a milestone, open the client link and pay with the sandbox buyer. The trace shows the real `authorize`, `capture` and `void` calls with PayPal debug IDs.
 
 Set `OBJECTION_WINDOW_SECONDS=60` to watch an automatic release happen.
