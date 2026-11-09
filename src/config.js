@@ -35,12 +35,13 @@ function pickAiProvider() {
 
 export const config = {
   port: Number(env("PORT", "3000")),
-  baseUrl: env("BASE_URL", `http://localhost:${env("PORT", "3000")}`),
+  baseUrl: env("BASE_URL", env("RENDER_EXTERNAL_URL", `http://localhost:${env("PORT", "3000")}`)),
   defaultCurrency: env("DEFAULT_CURRENCY", "SGD"),
   objectionWindowSeconds: Number(env("OBJECTION_WINDOW_SECONDS", "172800")),
   dataFile: env("DATA_FILE", path.join(ROOT, "data", "db.json")),
   paypal: {
-    mode: env("PAYPAL_MODE", hasPayPalKeys ? "sandbox" : "mock").toLowerCase(),
+    // Without keys we always fall back to the offline mock, whatever PAYPAL_MODE says.
+    mode: hasPayPalKeys ? env("PAYPAL_MODE", "sandbox").toLowerCase() : "mock",
     clientId: env("PAYPAL_CLIENT_ID"),
     clientSecret: env("PAYPAL_CLIENT_SECRET"),
   },

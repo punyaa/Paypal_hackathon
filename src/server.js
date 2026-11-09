@@ -36,6 +36,8 @@ export function createApp({ service, assistant } = {}) {
 
   const send = (res, m, role) => res.json(toPublic(m, role));
 
+  app.get("/api/health", (req, res) => res.json({ ok: true }));
+
   // ---------- public config ----------
   app.get("/api/config", (req, res) => {
     res.json({

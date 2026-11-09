@@ -1,0 +1,23 @@
+# Render Blueprint: New > Blueprint > connect this repo.
+services:
+  - type: web
+    name: proofpay
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_MODE
+        value: sandbox
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEFAULT_CURRENCY
+        value: SGD
+      # Short objection window so judges can see a release happen.
+      - key: OBJECTION_WINDOW_SECONDS
+        value: "120"
