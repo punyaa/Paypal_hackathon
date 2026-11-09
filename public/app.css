@@ -89,6 +89,7 @@ input, textarea, select {
   border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 10px 12px; width: 100%;
 }
 textarea { resize: vertical; min-height: 90px; }
+::placeholder { color: #a9b0c0; opacity: 1; }
 .form-grid { display: grid; gap: 16px; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .row-amount { display: grid; grid-template-columns: 1fr 110px; gap: 10px; }

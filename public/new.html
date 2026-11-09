@@ -9,21 +9,25 @@
 <body>
 <main>
   <h1>New milestone</h1>
-  <p class="lede">Describe the work. ProofPay drafts criteria a checker can verify, your client puts the money on hold with PayPal, and it's released when the work passes.</p>
+  <div class="page-head">
+    <p class="lede" style="margin:0">Describe the work. ProofPay drafts criteria a checker can verify, your client puts the money on hold with PayPal, and it's released when the work passes.</p>
+    <button type="button" class="btn secondary" id="example">Fill in the bakery example</button>
+  </div>
+  <div style="height:24px"></div>
 
   <div class="split">
     <form id="form" class="panel form-grid" novalidate>
       <label class="field">What are you delivering?
-        <input name="title" required placeholder="Landing page for Kopi & Crumbs bakery">
+        <input name="title" required placeholder="e.g. Landing page for a bakery">
       </label>
       <label class="field">Describe the work
         <span class="hint">Plain words are fine. The AI turns this into checkable criteria.</span>
-        <textarea name="description" rows="4" placeholder="One-page site with the menu and prices, two customer reviews, a contact form for catering orders, and it must work well on phones."></textarea>
+        <textarea name="description" rows="4" placeholder="e.g. One-page site with the menu and prices, a contact form, and it must work on phones."></textarea>
       </label>
       <div class="row-2">
         <label class="field">Amount
           <div class="row-amount">
-            <input name="amount" type="number" min="1" step="0.01" required placeholder="1200" class="num">
+            <input name="amount" type="number" min="1" step="0.01" required placeholder="0.00" class="num">
             <select name="currency" aria-label="Currency"><option>SGD</option><option>USD</option><option>EUR</option><option>GBP</option><option>AUD</option></select>
           </div>
         </label>
@@ -33,10 +37,10 @@
       </div>
       <div class="row-2">
         <label class="field">Your name
-          <input name="freelancerName" placeholder="Arjun Mehta">
+          <input name="freelancerName" placeholder="Your name">
         </label>
         <label class="field">Client
-          <input name="clientName" placeholder="Kopi & Crumbs Pte Ltd">
+          <input name="clientName" placeholder="Client or company name">
         </label>
       </div>
 
@@ -73,7 +77,7 @@ const error = qs("#error");
 function addRow(text = "") {
   const li = document.createElement("li");
   li.innerHTML = `<span class="mark" aria-hidden="true">${list.children.length + 1}</span>
-    <input aria-label="Criterion" value="${esc(text)}" placeholder="Has a contact form with name, email and message fields">
+    <input aria-label="Criterion" value="${esc(text)}" placeholder="e.g. Has a contact form with name, email and message fields">
     <button type="button" class="icon-btn" aria-label="Remove criterion">×</button>`;
   li.querySelector("button").onclick = () => { li.remove(); renumber(); preview(); };
   li.querySelector("input").oninput = preview;
@@ -93,6 +97,21 @@ function preview() {
 }
 form.addEventListener("input", preview);
 qs("#add").onclick = () => addRow();
+
+qs("#example").onclick = () => {
+  form.title.value = "Landing page for Kopi & Crumbs bakery";
+  form.description.value = "One-page site with the menu and prices, two customer reviews, a contact form for catering orders, and it must work well on phones.";
+  form.amount.value = "1200";
+  form.currency.value = "SGD";
+  form.freelancerName.value = "Arjun Mehta";
+  form.clientName.value = "Kopi & Crumbs Pte Ltd";
+  list.innerHTML = "";
+  ["Has a main heading that names the business",
+   "Has a pricing section with at least three priced items",
+   "Has a contact form with name, email and message fields",
+   "Works on a phone-sized screen without horizontal scrolling"].forEach((t) => addRow(t));
+  preview();
+};
 
 qs("#draft").onclick = async (e) => {
   const btn = e.currentTarget;
