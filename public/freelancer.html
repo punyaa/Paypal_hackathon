@@ -89,6 +89,7 @@ function render() {
   app.innerHTML = `
     ${new URLSearchParams(location.search).get("created") && m.status === "awaiting_funding" ? `<div class="notice" style="margin-bottom:18px">Milestone created. Send your client the protected link below.</div>` : ""}
     <div class="page-head"><div>
+      <p class="eyebrow">Freelancer milestone</p>
       <p class="muted" style="margin:0 0 6px">For ${esc(m.client.name)}${m.dueDate ? `, due ${new Date(m.dueDate).toLocaleDateString("en-SG", { day: "numeric", month: "short" })}` : ""}</p>
       <h1>${esc(m.title)}</h1>
     </div>${statusPill(m.status)}</div>
